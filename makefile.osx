@@ -1,0 +1,39 @@
+#!gmake 
+
+#-----------------------------------------
+#Basic Stuff -----------------------------
+CC          = g++ 
+cc          = gcc
+
+#-----------------------------------------
+#Optimization ----------------------------
+OPTMAC = -fast
+
+TARGETS = Scene
+
+OBJECTS = Scene.o
+
+#-----------------------------------------
+# Mac specific stuff
+MACLIBS = -lm -lstdc++
+#-----------------------------------------
+CCOPTSMAC = $(OPTMAC) -DOSX
+LDOPTSMAC = $(OPTMAC) $(MACLIBS) -DOSX
+
+#-----------------------------------------
+#-----------------------------------------
+
+default: $(TARGETS)
+
+clean:
+	/bin/rm -f *.o $(TARGETS)
+
+#-----------------------------------------
+#-----------------------------------------
+
+Scene: Scene.o
+	$(CC) Scene.o $(FRAMEWORK) $(LDOPTSMAC) -o Scene
+
+Scene.o: Scene.cpp
+	$(CC) Scene.cpp -c $(CCOPTSMAC)
+
