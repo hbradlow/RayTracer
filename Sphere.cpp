@@ -27,7 +27,7 @@ public:
     virtual void getNormalToWorldPoint(Eigen::Vector4f* loc, Eigen::Vector4f* normal);
 };
 float Sphere::timeOfIntersection(Ray *ray){
-    Ray r;
+    Ray r; //ray in object space
     Eigen::Vector4f v1 = (o2w->inverse() * (*(ray->direction)));
     Eigen::Vector4f v2 = (o2w->inverse() * (*(ray->location)));
     r.direction = &v1;
@@ -49,6 +49,7 @@ float Sphere::timeOfIntersection(Ray *ray){
     return ret>0 ? ret : max(ans1,ans2);
 }
 void Sphere::getNormalToWorldPoint(Eigen::Vector4f* loc, Eigen::Vector4f* normal){
-    *normal = *loc-(*o2w * center);
+  //  *normal = *loc-(*o2w * center);
+    *normal = o2w->inverse() * ((o2w->inverse())* (*loc) - (center));
 }
 #endif

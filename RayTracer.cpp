@@ -50,7 +50,7 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
         color->g = 0;
         color->b = 0;
     }
-    if(depth>5){
+    if(depth>3){
         color->r += 0;
         color->g += 0;
         color->b += 0;
@@ -78,13 +78,14 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
             Ray *lightRay = new Ray;//ray of light that hits the point
             Eigen::Vector4f r1 = *(ray->direction) * tmin + *(ray->location);
             Eigen::Vector4f r2 = (*lightPos) - r1;
-            r1 = r1 + r2*.01;
+            r1 = r1 + r2*.05f;
             lightRay->location = &r1;
             lightRay->direction = &r2;
             for(int j = 0; j<objects->size(); j++){
                 if((*objects)[j]->timeOfIntersection(lightRay)>0)
                 {
                     hit = 1;
+                    break;
                 }
             }
             if(!hit){
@@ -109,9 +110,9 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
             bRay->location = &location;
             
             trace(bRay, depth+1, color, objects, lights);
+            
             delete bRay;
             delete normal;
-
             delete lightRay;
             delete lightPos;
         }

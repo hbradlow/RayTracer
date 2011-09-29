@@ -20,12 +20,46 @@
         Leaf nodes
     
  
+    
+    Section Notes - 9/29/2011:
+        
+        for every pixel{
+            Ray w = c2w*Ray_Camera;
+            Color c = trace(w);
+            colorPixel(i,j,c);
+        }
+ 
+ 
+        Color trace(Ray w){
+            1. intersection with objects
+                - take intersection with min t
+            2. for every light
+                - if light is not bocked
+                    shade
+            3. reflect and repeat
+        }
+ 
+ 
+    Path tracing: advanced and used to model difhuse objects
+ 
+    Transformations:
+        Camera:
+            Ray starts at origin;
+            Film is at plane z=-1;
+        World:
+        Object:
+ 
+ 
+    Ellipsoid Normal:
+        Transform for point p - M
+            to transform N - (M^(-t)) (inverse transpose)
  */
 #ifndef _Scene_h
 #define _Scene_h
 
 #include <iostream>
 #include <vector>
+#include <math.h>
 #include <Eigen/Core>
 #include "Object.cpp"
 #include "FreeImage.h"
@@ -43,16 +77,21 @@ vector<Object*> *objects;
 vector<Object*> *lights;
 void addSphere(float x, float y, float z, float r){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
-    Eigen::Matrix4f translate;
-    Eigen::Matrix4f scale;
+    Eigen::Matrix4f translate, scale, rotate;
     translate << 1,0,0,x,
     0,1,0,y,
     0,0,1,z,
     0,0,0,1;
-    scale << r,0,0,0,
-    0,r,0,0,
-    0,0,r,0,
+    scale << r/2,0,0,0,
+    0,r/1.0f,0,0,
+    0,0,r/2.0f,0,
     0,0,0,1;
+    float theta = 1.0f;
+    rotate << 1,0,0,0,
+    0,cos(theta),-sin(theta),0,
+    0,sin(theta),cos(theta),0,
+    0,0,0,1;
+    
     
     *o2w = translate*scale;
     Object *o = new Sphere();
@@ -111,7 +150,7 @@ void initScene(){
     lights = new vector<Object*>;
     float z = -1000;
     
-    /*addSphere(0,0,z,100);
+    addSphere(0,0,z,100);
     addSphere(150,150,z,100);
     addSphere(150,-150,z,100);
     addSphere(-150,150,z,100);
@@ -120,16 +159,18 @@ void initScene(){
     addSphere(300,0,z,100);
     addSphere(-300,0,z,100);
     addSphere(0,300,z,100);
-    addSphere(0,-300,z,100);*/
+    addSphere(0,-300,z,100);/*
     
-    for(int i = -1200; i<1200; i+=200){
+    for(int i = -600; i<600; i+=200){
         for(int j = -500; j>-2100; j-=200){
-            if(i%400==0)
-                addSphere(i,j/2+530,j,90);
-            else
-                addSphere(i,(j+100)/2+530,j+100,90);
+           // for(int k = 0; k<1000; k+=200){
+                if(i%400==0)
+                    addSphere(i,j/2+530,j,90);
+                else
+                    addSphere(i,(j+100)/2+530,j+100,90);
+          //  }
         }
-    }
+    }*/
     
     
     
