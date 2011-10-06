@@ -14,30 +14,27 @@ using namespace std;
 
 class Camera: public Object{
 public:
-    Ray *ray;
+    Eigen::Vector4f location;
     Camera(Eigen::Matrix4f *object2World){
         o2w = object2World;
+        location << 0,0,0,1;
     }
     void getRayForWorldPosition(float x, float y, Ray *r){
-        Eigen::Vector4f *v = new Eigen::Vector4f;
-        *v << x,y,0,1;
+        Eigen::Vector4f v;
+        v << x,y,-1,1;
+       // cout << o2w->inverse() << endl;
+        v = v-location;
+        v = o2w->inverse() * (v);
         
-      /*  Eigen::Vector4f w,v,u;
-        w << 0,0,1,0;
-        v << 0,1,0,0;
-        u << 1,0,0,0;
-        w = *o2w * w;
-        v = *o2w * v;
-        u = *o2w * u;*/
         
-        *v = o2w->inverse() * (*v) - *(ray->location);
-        Eigen::Vector4f *l = new Eigen::Vector4f;
-        *l = *(o2w) * *(ray->location);
-        r->location = l;
+        Eigen::Vector4f l;
+        l = (*o2w) * location;
+        r->location = new Eigen::Vector4f;
+        *r->location = l;
         
-        *v = *(o2w) * (*v);
-
-        r->direction = v;
+        
+        r->direction = new Eigen::Vector4f;
+        *r->direction = v;
     }
 };
 

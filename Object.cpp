@@ -16,10 +16,17 @@ struct Ray {
     Eigen::Vector4f *location;
     Eigen::Vector4f *direction;
 };
+struct BRDF {
+    float kra,kga,kba;
+    float krd,kgd,kbd;
+    float krs,kgs,kbs;
+    float krr,kgr,kbr;
+};
 
 class Object{
 public:
     Eigen::Matrix4f *o2w;
+    BRDF brdf;
     virtual float timeOfIntersection(Ray *ray);
     virtual void getWorldLocation(Eigen::Vector4f* loc);
     virtual void getNormalToWorldPoint(Eigen::Vector4f* loc, Eigen::Vector4f* normal);

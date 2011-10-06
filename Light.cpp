@@ -12,7 +12,7 @@
 
 class Light: public Object {
 public:
-    
+    float r,g,b;
 };
 
 

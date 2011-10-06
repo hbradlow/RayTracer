@@ -12,6 +12,7 @@
 #include <Eigen/Core>
 #include "Object.cpp"
 #include <math.h>
+#include "Light.cpp"
 using namespace std;
 
 class RayTracer {
@@ -19,7 +20,10 @@ public:
     void trace(Ray *ray, int depth, Color* color, vector<Object*>* objects, vector<Object*>* lights);
 };
 
-void shade(Ray *ray, float t, Color* color,Eigen::Vector4f* lightPos, Object *o){
+void shade(Ray *ray, float t, Color* color,Light *light, Object *o){
+    Eigen::Vector4f *lightPos = new Eigen::Vector4f;
+    light->getWorldLocation(lightPos);
+    
     Eigen::Vector4f location = (*(ray->location) + (*(ray->direction)*(t)));
     
     Eigen::Vector4f lightDir = ((*lightPos)-(*(ray->location) + (*(ray->direction)*t)));
@@ -36,10 +40,23 @@ void shade(Ray *ray, float t, Color* color,Eigen::Vector4f* lightPos, Object *o)
     r = (lightDir) - 2*(lightDir.dot(*normal))*(*normal);
     r = r/(r.norm());
     
-    float kd = .2f;
-    float ks = .8f;
-    float dot = max(normal->dot(lightDir),0.0f)*kd + pow(max(r.dot(viewDir),0.0f),100)*ks;
+    float kd = o->brdf.krd;
+    float ks = o->brdf.krs;
+    float ka = o->brdf.kra;
+    float dot = max(normal->dot(lightDir),0.0f)*kd*light->r + pow(max(r.dot(viewDir),0.0f),100)*ks*light->r + ka;
     color->r += dot;
+    
+    kd = o->brdf.kgd;
+    ks = o->brdf.kgs;
+    ka = o->brdf.kga;
+    dot = max(normal->dot(lightDir),0.0f)*kd*light->g + pow(max(r.dot(viewDir),0.0f),100)*ks*light->g + ka;
+    color->g += dot;
+    
+    kd = o->brdf.kbd;
+    ks = o->brdf.kbs;
+    ka = o->brdf.kba;
+    dot = max(normal->dot(lightDir),0.0f)*kd*light->b + pow(max(r.dot(viewDir),0.0f),100)*ks*light->b + ka;
+    color->b += dot;
     
     delete normal;
 }
@@ -50,17 +67,14 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
         color->g = 0;
         color->b = 0;
     }
-    if(depth>3){
-        color->r += 0;
-        color->g += 0;
-        color->b += 0;
+    if(depth>9){
         return;
     }
     Object* o;
     float tmin = 999999999;
     bool found = false;
     for(int i = 0; i<objects->size(); i++){
-        if((*objects)[i]->timeOfIntersection(ray)>1)
+        if((*objects)[i]->timeOfIntersection(ray)>0)
         {
             if((*objects)[i]->timeOfIntersection(ray)<tmin){
                 tmin = (*objects)[i]->timeOfIntersection(ray);
@@ -71,28 +85,8 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
     }
     if(found)
     {
-        for(int k = 0; k<lights->size(); k++){
-            Eigen::Vector4f *lightPos = new Eigen::Vector4f;
-            (*lights)[k]->getWorldLocation(lightPos);
-            int hit = 0;
-            Ray *lightRay = new Ray;//ray of light that hits the point
-            Eigen::Vector4f r1 = *(ray->direction) * tmin + *(ray->location);
-            Eigen::Vector4f r2 = (*lightPos) - r1;
-            r1 = r1 + r2*.05f;
-            lightRay->location = &r1;
-            lightRay->direction = &r2;
-            for(int j = 0; j<objects->size(); j++){
-                if((*objects)[j]->timeOfIntersection(lightRay)>0)
-                {
-                    hit = 1;
-                    break;
-                }
-            }
-            if(!hit){
-                shade(ray,tmin,color,lightPos,o);
-            }
-            
-            //Reflect ray and repeat
+        //Reflect ray and repeat
+        if(o->brdf.krr !=0 || o->brdf.kgr !=0 || o->brdf.kbr !=0){
             Eigen::Vector4f bounce;
             Eigen::Vector4f location = (*(ray->location) + (*(ray->direction)*(tmin)));
             
@@ -110,22 +104,45 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
             bRay->location = &location;
             
             trace(bRay, depth+1, color, objects, lights);
+            color->r *= pow(o->brdf.krr,depth+1);
+            color->g *= pow(o->brdf.kgr,depth+1);
+            color->b *= pow(o->brdf.kbr,depth+1);
             
             delete bRay;
             delete normal;
+        }
+        
+        for(int k = 0; k<lights->size(); k++){
+            Eigen::Vector4f *lightPos = new Eigen::Vector4f;
+            (*lights)[k]->getWorldLocation(lightPos);
+            int hit = 0;
+            Ray *lightRay = new Ray;//ray of light that hits the point
+            Eigen::Vector4f r1 = *(ray->direction) * tmin + *(ray->location);
+            Eigen::Vector4f r2 = (*lightPos) - r1;
+            r1 = r1 + r2*.05f;
+            lightRay->location = &r1;
+            lightRay->direction = &r2;
+            for(int j = 0; j<objects->size(); j++){
+                if((*objects)[j]->timeOfIntersection(lightRay)>0 && (*objects)[j]->timeOfIntersection(lightRay)<1.0f)//preventing shadowing TODO
+                {
+                    hit = 1;
+                    break;
+                }
+            }
+            if(!hit){
+
+                shade(ray,tmin,color,(Light*)(*lights)[k],o);
+            }
+            else{
+                color->r += o->brdf.kra;
+                color->g += o->brdf.kga;
+                color->b += o->brdf.kba;
+            }
+
             delete lightRay;
             delete lightPos;
         }
-        color->r += .2f;
-        color->g += 0;
-        color->b += 0;
     }
-    else{
-        color->r += 0;
-        color->g += 0;
-        color->b += 0;
-    }
-    color->r *= pow(.8f,depth);
     
     //set the max color to be 1
     if(color->r>1)
@@ -134,7 +151,5 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
         color->g = 1;
     if(color->b>1)
         color->b = 1;
-    color->g = color->r;
-    color->b = color->r;
 }
 #endif

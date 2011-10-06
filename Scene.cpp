@@ -5,7 +5,15 @@
 //  Created by Henry Bradlow on 9/22/11.
 //  Copyright (c) 2011 Westview High School. All rights reserved.
 //
-/*  Lecture Notes:
+/*  
+    Midterm Review:
+ 
+    -CHECK OUT SP11 REVIEW ON TRANSFORMATIONS
+    -CHECK OUT DEPTH DISTORTION
+    -CHECK DRAWING A LINE AND FILLING A POLYGON
+ 
+ 
+    Lecture Notes:
     Intersection: Ray vs Sphere (formula in book)     (Triangle Equation)    (Ray)
     Triangle: in barycentric coordinates: X(B,y) = V1 + B(V2-V1) + y(V3-V1) = A+tD B+y<=1 and B,y>=0
     
@@ -75,16 +83,16 @@ using namespace std;
 FIBITMAP * bitmap;
 vector<Object*> *objects;
 vector<Object*> *lights;
-void addSphere(float x, float y, float z, float r){
+void addSphere(float x, float y, float z, float r, float ka, float kd, float ks, float kr){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
     Eigen::Matrix4f translate, scale, rotate;
     translate << 1,0,0,x,
     0,1,0,y,
     0,0,1,z,
     0,0,0,1;
-    scale << r/2,0,0,0,
+    scale << r/1.0f,0,0,0,
     0,r/1.0f,0,0,
-    0,0,r/2.0f,0,
+    0,0,r/1.0f,0,
     0,0,0,1;
     float theta = 1.0f;
     rotate << 1,0,0,0,
@@ -96,23 +104,37 @@ void addSphere(float x, float y, float z, float r){
     *o2w = translate*scale;
     Object *o = new Sphere();
     o->o2w = o2w;
+    o->brdf.krs = ks;
+    o->brdf.krd = kd;
+    o->brdf.kra = ka;
+    o->brdf.krr = kr;
+    
+    o->brdf.kgs = ks;
+    o->brdf.kgd = kd;
+    o->brdf.kga = ka;
+    o->brdf.kgr = kr;
+    
+    o->brdf.kbs = ks;
+    o->brdf.kbd = kd;
+    o->brdf.kba = ka;
+    o->brdf.kbr = kr;
     
     objects->push_back(o);
 }
-void addTriangle(){
+void addTriangle(float z, int up){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
     Eigen::Matrix4f translate;
     Eigen::Matrix4f scale;
     Eigen::Matrix4f rotate;
-    translate << 1,0,0,-3000,
-    0,1,0,-3000,
-    0,0,1,-1150,
+    translate << 1,0,0,-15,
+    0,1,0,-15,
+    0,0,1,z,
     0,0,0,1;
-    scale << 6000,0,0,0,
-    0,6000,0,0,
-    0,0,6000,0,
+    scale << 60,0,0,0,
+    0,60,0,0,
+    0,0,up*60,0,
     0,0,0,1;
-    float theta = 1.0f;
+    float theta = 0.0f;
     rotate << 1,0,0,0,
     0,cos(theta),-sin(theta),0,
     0,sin(theta),cos(theta),0,
@@ -122,6 +144,20 @@ void addTriangle(){
     *o2w = rotate*translate*scale;
     Object *o = new Triangle();
     o->o2w = o2w;
+    o->brdf.krs = 0.8f;
+    o->brdf.krd = 0.2f;
+    o->brdf.kra = 0.05f;
+    o->brdf.krr = 0.1f;
+    
+    o->brdf.kgs = 0.8f;
+    o->brdf.kgd = 0.2f;
+    o->brdf.kga = 0.05f;
+    o->brdf.kgr = 0.1f;
+    
+    o->brdf.kbs = 0.8f;
+    o->brdf.kbd = 0.2f;
+    o->brdf.kba = 0.05f;
+    o->brdf.kbr = 0.1f;
     
     objects->push_back(o);
 }
@@ -139,48 +175,31 @@ void addPointLight(float x, float y, float z){
     0,0,0,1;
     
     *o2w = translate*scale;
-    Object *o = new Light();
+    Light *o = new Light();
     o->o2w = o2w;
+    o->r = 1.0f;
+    o->g = 1.0f;
+    o->b = 1.0f;
     lights->push_back(o);
 }
-void initScene(){
-    float r = 60;
-    
+void initScene(){    
     objects = new vector<Object*>;
     lights = new vector<Object*>;
-    float z = -1000;
     
-    addSphere(0,0,z,100);
-    addSphere(150,150,z,100);
-    addSphere(150,-150,z,100);
-    addSphere(-150,150,z,100);
-    addSphere(-150,-150,z,100);
-    
-    addSphere(300,0,z,100);
-    addSphere(-300,0,z,100);
-    addSphere(0,300,z,100);
-    addSphere(0,-300,z,100);/*
-    
-    for(int i = -600; i<600; i+=200){
-        for(int j = -500; j>-2100; j-=200){
-           // for(int k = 0; k<1000; k+=200){
-                if(i%400==0)
-                    addSphere(i,j/2+530,j,90);
-                else
-                    addSphere(i,(j+100)/2+530,j+100,90);
-          //  }
-        }
-    }*/
-    
-    
-    
-    addTriangle();
-    
-    //addPointLight(0,-300,100);
-    addPointLight(-300,800,-800);
-    addPointLight(800,800,-300);
-    addPointLight(-300,-800,-300);
-    
+    addPointLight(0,-1,-2);
+    addPointLight(0,-5,-2.2f);
+    addPointLight(0,5,-2.2f);
+    addSphere(0,0,-3,.4f,0,0,0,1.0f);
+    addSphere(1,1,-3,.4f,0,0,0,1.0f);
+    addSphere(1,0,-3,.4f,0,0,0,1.0f);
+    addSphere(0,1,-3,.4f,0,0,0,1.0f);
+    addSphere(0,-1,-3,.4f,0,0,0,1.0f);
+    addSphere(-1,0,-3,.4f,0,0,0,1.0f);
+    addSphere(-1,-1,-3,.4f,0,0,0,1.0f);
+    addSphere(1,-1,-3,.4f,0,0,0,1.0f);
+    addSphere(-1,1,-3,.4f,0,0,0,1.0f);
+    addTriangle(-3.4f,1);
+    addTriangle(-1,-1);
 }
 
 int setPixelColor(int x, int y, Color *color){
@@ -205,31 +224,31 @@ int main(int argc, char *argv[]){
     Eigen::Matrix4f camera2World;
     Eigen::Matrix4f translate;
     Eigen::Matrix4f scale;
-    Eigen::Matrix4f rotate;
-    translate << 1,0,0,0,
-            0,1,0,0,
-            0,0,1,1500,
+    Eigen::Matrix4f rotatex,rotatez;
+    translate << 1,0,0,.8f,
+            0,1,0,-1,
+            0,0,1,-2.5f,
             0,0,0,1;
     scale << screenWidth/2,0,0,0,
             0,screenHeight/2,0,0,
             0,0,1,0,
     0,0,0,1;
-    float theta = .0f;
-    rotate << 1,0,0,0,
+    float theta = -3.14159f/3.0f;
+    rotatex << 1,0,0,0,
     0,cos(theta),-sin(theta),0,
     0,sin(theta),cos(theta),0,
-    0,0,0,1;
-    camera2World = translate*scale*rotate;
+    0,0,0,1; 
+    theta = -3.14159f/5.5f;
+    rotatez << cos(theta),-sin(theta),0,0,
+    sin(theta),cos(theta),0,0,
+    0,0,1,0,
+    0,0,0,1; 
     
-    Ray cameraRay;
-    Eigen::Vector4f location;
-    Eigen::Vector4f direction;
-    location << 0,0,1,1;
-    direction << 0,0,1,0;
-    cameraRay.location = &location;
-    cameraRay.direction = &direction;
+    //cout << rotate << endl;
+    camera2World = translate*rotatex*rotatez;
+    
     Camera *c = new Camera(&camera2World);
-    c->ray = &cameraRay;
+    //c->location = location;
 
         
     Ray *r = new Ray;
@@ -242,9 +261,9 @@ int main(int argc, char *argv[]){
     fflush(stdout);
     for(float i = 0; i<screenWidth; i+=1.0f/resolution){
         for (float j = 0; j<screenHeight; j+=1.0f/resolution) {
-            c->getRayForWorldPosition(screenWidth/2.0f-i,screenWidth/2.0f-j,r);
+            c->getRayForWorldPosition((screenWidth/2.0f-i)/(float)screenWidth,(screenHeight/2.0f-j)/(float)screenHeight,r);
             rt->trace(r,0,color,objects, lights);
-            setPixelColor(i*resolution,j*resolution,color);
+            setPixelColor((screenWidth-i)*resolution,(screenHeight-j)*resolution,color);
         }
         
         
