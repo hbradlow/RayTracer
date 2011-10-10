@@ -49,7 +49,14 @@ float Sphere::timeOfIntersection(Ray *ray){
     return ret>0 ? ret : max(ans1,ans2);
 }
 void Sphere::getNormalToWorldPoint(Eigen::Vector4f* loc, Eigen::Vector4f* normal){
-  //  *normal = *loc-(*o2w * center);
-    *normal = o2w->inverse() * ((o2w->inverse())* (*loc) - (center));
+    Eigen::Matrix4f test;
+    test << 1,0,0,0,
+            0,1,0,0,
+            0,0,1,0,
+            0,0,0,0;
+    
+    *normal = test * ((o2w->inverse()).transpose() * ((o2w->inverse())* (*loc) - (center)));
+    
+   // cout << "Vector: " << (o2w->inverse()) * test << endl;
 }
 #endif

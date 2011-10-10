@@ -83,15 +83,15 @@ using namespace std;
 FIBITMAP * bitmap;
 vector<Object*> *objects;
 vector<Object*> *lights;
-void addSphere(float x, float y, float z, float r, float ka, float kd, float ks, float kr){
+void addSphere(float x, float y, float z, float r, float ka, float kd, float ks, float krr, float krg, float krb){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
     Eigen::Matrix4f translate, scale, rotate;
     translate << 1,0,0,x,
     0,1,0,y,
     0,0,1,z,
     0,0,0,1;
-    scale << r/1.0f,0,0,0,
-    0,r/1.0f,0,0,
+    scale << r/2.0f,0,0,0,
+    0,r/2.0f,0,0,
     0,0,r/1.0f,0,
     0,0,0,1;
     float theta = 1.0f;
@@ -101,23 +101,23 @@ void addSphere(float x, float y, float z, float r, float ka, float kd, float ks,
     0,0,0,1;
     
     
-    *o2w = translate*scale;
+    *o2w = translate*rotate*scale;
     Object *o = new Sphere();
     o->o2w = o2w;
     o->brdf.krs = ks;
     o->brdf.krd = kd;
     o->brdf.kra = ka;
-    o->brdf.krr = kr;
+    o->brdf.krr = krr;
     
     o->brdf.kgs = ks;
     o->brdf.kgd = kd;
     o->brdf.kga = ka;
-    o->brdf.kgr = kr;
+    o->brdf.kgr = krg;
     
     o->brdf.kbs = ks;
     o->brdf.kbd = kd;
     o->brdf.kba = ka;
-    o->brdf.kbr = kr;
+    o->brdf.kbr = krb;
     
     objects->push_back(o);
 }
@@ -182,24 +182,114 @@ void addPointLight(float x, float y, float z){
     o->b = 1.0f;
     lights->push_back(o);
 }
-void initScene(){    
-    objects = new vector<Object*>;
-    lights = new vector<Object*>;
+
+
+
+
+
+
+void addPointLight(float x, float y, float z, float r, float g, float b){
+    Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
+    Eigen::Matrix4f translate;
+    Eigen::Matrix4f scale;
+    translate << 1,0,0,x,
+    0,1,0,y,
+    0,0,1,z,
+    0,0,0,1;
+    scale << 1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1;
     
-    addPointLight(0,-1,-2);
+    *o2w = translate*scale;
+    Light *o = new Light();
+    o->o2w = o2w;
+    o->r = r;
+    o->g = g;
+    o->b = b;
+    lights->push_back(o);
+}
+void addSphere(float x, float y, float z, float r, BRDF *brdf){
+    Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
+    Eigen::Matrix4f translate, scale, rotate;
+    translate << 1,0,0,x,
+    0,1,0,y,
+    0,0,1,z,
+    0,0,0,1;
+    scale << r,0,0,0,
+    0,r,0,0,
+    0,0,r,0,
+    0,0,0,1;
+    float theta = 1.0f;
+    rotate << 1,0,0,0,
+    0,cos(theta),-sin(theta),0,
+    0,sin(theta),cos(theta),0,
+    0,0,0,1;
+    
+    *o2w = translate*scale;
+    Object *o = new Sphere();
+    o->o2w = o2w;
+    o->brdf = *brdf;
+    
+    objects->push_back(o);
+}
+void addTriangle(float x, float y, float z, float width, BRDF *brdf){
+    Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
+    Eigen::Matrix4f translate;
+    Eigen::Matrix4f scale;
+    Eigen::Matrix4f rotate;
+    translate << 1,0,0,x,
+    0,1,0,y,
+    0,0,1,z,
+    0,0,0,1;
+    scale << width,0,0,0,
+    0,width,0,0,
+    0,0,width,0,
+    0,0,0,1;
+    float theta = 0.0f;
+    rotate << 1,0,0,0,
+    0,cos(theta),-sin(theta),0,
+    0,sin(theta),cos(theta),0,
+    0,0,0,1;
+    
+    
+    *o2w = rotate*translate*scale;
+    Object *o = new Triangle();
+    o->o2w = o2w;
+    o->brdf = *brdf;
+    
+    objects->push_back(o);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void initScene(){    
+  /*  addPointLight(0,-1,-2);
     addPointLight(0,-5,-2.2f);
     addPointLight(0,5,-2.2f);
-    addSphere(0,0,-3,.4f,0,0,0,1.0f);
-    addSphere(1,1,-3,.4f,0,0,0,1.0f);
-    addSphere(1,0,-3,.4f,0,0,0,1.0f);
-    addSphere(0,1,-3,.4f,0,0,0,1.0f);
-    addSphere(0,-1,-3,.4f,0,0,0,1.0f);
-    addSphere(-1,0,-3,.4f,0,0,0,1.0f);
-    addSphere(-1,-1,-3,.4f,0,0,0,1.0f);
-    addSphere(1,-1,-3,.4f,0,0,0,1.0f);
-    addSphere(-1,1,-3,.4f,0,0,0,1.0f);
+    addSphere(0,0,-3,.4f,0,0,0,1.0f,0,0);
+    addSphere(1,1,-3,.4f,0,0,0,1.0f,0,1.0f);
+    addSphere(1,0,-3,.4f,0,0,0,1.0f,1.0f,0);
+    addSphere(0,1,-3,.4f,0,0,0,1.0f,1.0f,1.0f);
+    addSphere(0,-1,-3,.4f,0,0,0,.0f,1.0f,0);
+    addSphere(-1,0,-3,.4f,0,0,0,.0f,1.0f,1.0f);
+    addSphere(-1,-1,-3,.4f,0,0,0,.0f,0,1.0);
+    addSphere(1,-1,-3,.4f,0,0,0,1.0f,.5f,.5f);
+    addSphere(-1,1,-3,.4f,0,0,0,1.0f,0,.5f);
     addTriangle(-3.4f,1);
-    addTriangle(-1,-1);
+    addTriangle(-1,-1);*/
 }
 
 int setPixelColor(int x, int y, Color *color){
@@ -217,35 +307,112 @@ int main(int argc, char *argv[]){
 
     FreeImage_Initialise();
     bitmap = FreeImage_Allocate(screenWidth*resolution,screenHeight*resolution,8*3);
+    
+    objects = new vector<Object*>;
+    lights = new vector<Object*>;
 
     initScene();
     
     //set up camera to world transformation
     Eigen::Matrix4f camera2World;
-    Eigen::Matrix4f translate;
+    camera2World << 1,0,0,0,
+                    0,1,0,0,
+                    0,0,1,0,
+                    0,0,0,1;
+    
+   /* Eigen::Matrix4f translate;
     Eigen::Matrix4f scale;
     Eigen::Matrix4f rotatex,rotatez;
-    translate << 1,0,0,.8f,
-            0,1,0,-1,
-            0,0,1,-2.5f,
+    translate << 1,0,0,2.8f,
+            0,1,0,-1.0f,
+            0,0,1,-2.0f,
             0,0,0,1;
-    scale << screenWidth/2,0,0,0,
-            0,screenHeight/2,0,0,
-            0,0,1,0,
-    0,0,0,1;
-    float theta = -3.14159f/3.0f;
+    float theta = -3.14159f/2.5f;
     rotatex << 1,0,0,0,
     0,cos(theta),-sin(theta),0,
     0,sin(theta),cos(theta),0,
     0,0,0,1; 
-    theta = -3.14159f/5.5f;
+    theta = -3.14159f/2.5f;
     rotatez << cos(theta),-sin(theta),0,0,
     sin(theta),cos(theta),0,0,
     0,0,1,0,
-    0,0,0,1; 
+    0,0,0,1; */
+    
+    for(int i = 0; i<argc; i++){
+        char *item = argv[i];
+        if(strcmp(item,"-pl")==0)// -pl x y z r g b
+        {
+            addPointLight(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]));
+        }
+        else if(strcmp(item,"-sphere")==0)// -sphere x y z r  kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr
+        {
+            BRDF brdf;
+            brdf.kra = atof(argv[i+5]);
+            brdf.kga = atof(argv[i+6]);
+            brdf.kba = atof(argv[i+7]);
+            
+            brdf.krd = atof(argv[i+8]);
+            brdf.kgd = atof(argv[i+9]);
+            brdf.kbd = atof(argv[i+10]);
+            
+            brdf.krs = atof(argv[i+11]);
+            brdf.kgs = atof(argv[i+12]);
+            brdf.kbs = atof(argv[i+13]);
+            
+            brdf.krr = atof(argv[i+14]);
+            brdf.kgr = atof(argv[i+15]);
+            brdf.kbr = atof(argv[i+16]);
+            cout << "HERE" << endl;
+            addSphere(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),&brdf);
+        }
+        else if(strcmp(item,"-triangle")==0)// -triangle x y z width  kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr
+        {
+            BRDF brdf;
+            brdf.kra = atof(argv[i+5]);
+            brdf.kga = atof(argv[i+6]);
+            brdf.kba = atof(argv[i+7]);
+            
+            brdf.krd = atof(argv[i+8]);
+            brdf.kgd = atof(argv[i+9]);
+            brdf.kbd = atof(argv[i+10]);
+            
+            brdf.krs = atof(argv[i+11]);
+            brdf.kgs = atof(argv[i+12]);
+            brdf.kbs = atof(argv[i+13]);
+            
+            brdf.krr = atof(argv[i+14]);
+            brdf.kgr = atof(argv[i+15]);
+            brdf.kbr = atof(argv[i+16]);
+            addTriangle(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),&brdf);
+        }
+        else if(strcmp(item,"-camera")==0)// -camera x y z rotatex rotatey rotatez
+        {
+            Eigen::Matrix4f translate,rotatex,rotatey,rotatez;
+            translate <<1,0,0,atof(argv[i+1]),
+                        0,1,0,atof(argv[i+2]),
+                        0,0,1,atof(argv[i+3]),
+                        0,0,0,1;
+            rotatex <<  1,0,0,0,
+                        0,cos(atof(argv[i+4])),-sin(atof(argv[i+4])),0,
+                        0,sin(atof(argv[i+4])),cos(atof(argv[i+4])),0,
+                        0,0,0,1;
+            rotatey <<  cos(atof(argv[i+5])),0,-sin(atof(argv[i+5])),0,
+                        0,1,0,0,
+                        sin(atof(argv[i+5])),0,cos(atof(argv[i+5])),0,
+                        0,0,0,1;
+            rotatez <<  cos(atof(argv[i+6])),-sin(atof(argv[i+6])),0,0,
+                        sin(atof(argv[i+6])),cos(atof(argv[i+6])),0,0,
+                        0,0,1,0,
+                        0,0,0,1;
+            camera2World = translate*rotatez*rotatey*rotatex;
+        }
+    }
+
+    
     
     //cout << rotate << endl;
-    camera2World = translate*rotatex*rotatez;
+    
+
     
     Camera *c = new Camera(&camera2World);
     //c->location = location;
