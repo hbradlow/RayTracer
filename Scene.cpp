@@ -66,6 +66,7 @@
 #define _Scene_h
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <math.h>
 #include <Eigen/Core>
@@ -83,6 +84,11 @@ using namespace std;
 FIBITMAP * bitmap;
 vector<Object*> *objects;
 vector<Object*> *lights;
+float resolution = 1.0f;
+Eigen::Matrix4f camera2World;
+char *outputPath = "test.png";
+
+
 void addSphere(float x, float y, float z, float r, float ka, float kd, float ks, float krr, float krg, float krb){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
     Eigen::Matrix4f translate, scale, rotate;
@@ -209,35 +215,66 @@ void addPointLight(float x, float y, float z, float r, float g, float b){
     o->b = b;
     lights->push_back(o);
 }
-void addSphere(float x, float y, float z, float r, BRDF *brdf){
+void addDirectionalLight(float x, float y, float z, float r, float g, float b){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
-    Eigen::Matrix4f translate, scale, rotate;
+    Eigen::Matrix4f translate;
+    Eigen::Matrix4f scale;
+    translate << 1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1;
+    scale << 1,0,0,0,
+    0,1,0,0,
+    0,0,1,0,
+    0,0,0,1;
+    
+    *o2w = translate*scale;
+    
+    
+    Eigen::Vector4f *direction = new Eigen::Vector4f;
+    *direction << x,y,z,0;
+    Light *o = new Light();
+    o->o2w = o2w;
+    o->r = r;
+    o->g = g;
+    o->b = b;
+    o->direction = direction;
+    lights->push_back(o);
+}
+void addSphere(float x, float y, float z, float radx, float rady, float radz, float rx, float ry, float rz, BRDF *brdf){
+    Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
+    Eigen::Matrix4f translate, scale, rotatex,rotatey,rotatez;
     translate << 1,0,0,x,
     0,1,0,y,
     0,0,1,z,
     0,0,0,1;
-    scale << r,0,0,0,
-    0,r,0,0,
-    0,0,r,0,
+    scale << radx,0,0,0,
+    0,rady,0,0,
+    0,0,radz,0,
     0,0,0,1;
-    float theta = 1.0f;
-    rotate << 1,0,0,0,
-    0,cos(theta),-sin(theta),0,
-    0,sin(theta),cos(theta),0,
+    rotatex <<  1,0,0,0,
+    0,cos(rx),-sin(rx),0,
+    0,sin(rx),cos(rx),0,
+    0,0,0,1;
+    rotatey <<  cos(ry),0,sin(ry),0,
+    0,1,0,0,
+    -sin(ry),0,cos(ry),0,
+    0,0,0,1;
+    rotatez <<  cos(rz),-sin(rz),0,0,
+    sin(rz),cos(rz),0,0,
+    0,0,1,0,
     0,0,0,1;
     
-    *o2w = translate*scale;
+    *o2w = translate*rotatez*rotatey*rotatex*scale;
     Object *o = new Sphere();
     o->o2w = o2w;
     o->brdf = *brdf;
     
     objects->push_back(o);
 }
-void addTriangle(float x, float y, float z, float width, BRDF *brdf){
+void addTriangle(float x, float y, float z, float width, float rx, float ry, float rz, BRDF *brdf){
     Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
-    Eigen::Matrix4f translate;
-    Eigen::Matrix4f scale;
-    Eigen::Matrix4f rotate;
+    Eigen::Matrix4f translate, scale, rotatex,rotatey,rotatez;
     translate << 1,0,0,x,
     0,1,0,y,
     0,0,1,z,
@@ -246,14 +283,21 @@ void addTriangle(float x, float y, float z, float width, BRDF *brdf){
     0,width,0,0,
     0,0,width,0,
     0,0,0,1;
-    float theta = 0.0f;
-    rotate << 1,0,0,0,
-    0,cos(theta),-sin(theta),0,
-    0,sin(theta),cos(theta),0,
+    rotatex <<  1,0,0,0,
+    0,cos(rx),-sin(rx),0,
+    0,sin(rx),cos(rx),0,
+    0,0,0,1;
+    rotatey <<  cos(ry),0,sin(ry),0,
+    0,1,0,0,
+    -sin(ry),0,cos(ry),0,
+    0,0,0,1;
+    rotatez <<  cos(rz),-sin(rz),0,0,
+    sin(rz),cos(rz),0,0,
+    0,0,1,0,
     0,0,0,1;
     
     
-    *o2w = rotate*translate*scale;
+    *o2w = translate*rotatez*rotatey*rotatex*scale;
     Object *o = new Triangle();
     o->o2w = o2w;
     o->brdf = *brdf;
@@ -261,6 +305,46 @@ void addTriangle(float x, float y, float z, float width, BRDF *brdf){
     objects->push_back(o);
 }
 
+void addTriangle(Eigen::Vector4f p1, Eigen::Vector4f p2, Eigen::Vector4f p3){
+    Eigen::Matrix4f *o2w = new Eigen::Matrix4f;
+    *o2w << (p2-p1).x(),(p3-p1).x(),0,0,
+            (p2-p1).y(),(p3-p1).y(),0,0,
+            (p2-p1).z(),(p3-p1).z(),1,0,
+            0,0,0,1;
+    Eigen::Matrix4f translate;
+    translate << 1,0,0,0,
+    0,1,0,0,
+    0,0,1,-3,
+    0,0,0,1;
+    Triangle *o = new Triangle();
+    *o2w = translate*(*o2w);
+    o->o2w = o2w;
+    
+    
+    BRDF brdf;
+    
+    brdf.kra = .05;
+    brdf.kga = .05;
+    brdf.kba = .05;
+    
+    brdf.krd = .2;
+    brdf.kgd = .2;
+    brdf.kbd = .2;
+    
+    brdf.krs = .8;
+    brdf.kgs = .8;
+    brdf.kbs = .8;
+    
+    brdf.krr = 0;
+    brdf.kgr = 0;
+    brdf.kbr = 0;
+    
+    brdf.sp = 100;
+    
+    o->brdf = brdf;
+    
+    objects->push_back(o);
+}
 
 
 
@@ -276,7 +360,7 @@ void addTriangle(float x, float y, float z, float width, BRDF *brdf){
 
 
 void initScene(){    
-  /*  addPointLight(0,-1,-2);
+   /* addPointLight(0,-1,-2);
     addPointLight(0,-5,-2.2f);
     addPointLight(0,5,-2.2f);
     addSphere(0,0,-3,.4f,0,0,0,1.0f,0,0);
@@ -300,123 +384,211 @@ int setPixelColor(int x, int y, Color *color){
     FreeImage_SetPixelColor(bitmap,x,y,c);
     delete c;
 }
-int main(int argc, char *argv[]){
-    
-    int screenWidth = 500, screenHeight = 500;
-    float resolution = 1.0f;
+void parseOption(char* item, int i, char *argv[]){
+    if(strcmp(item,"-resolution")==0)// -resolution value
+    {
+        resolution = atof(argv[i+1])/500.0f;
+    }
+    if(strcmp(item,"-o")==0)// -resolution value
+    {
+        outputPath = argv[i+1];
+    }
+    if(strcmp(item,"-pl")==0)// -pl x y z r g b
+    {
+        addPointLight(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]));
+    }
+    if(strcmp(item,"-dl")==0)// -pl x y z r g b
+    {
+        addDirectionalLight(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]));
+    }
+    else if(strcmp(item,"-sphere")==0)// -sphere x y z rx ry rz rotatex rotatey rotatez  kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr   sp
+    {
+        BRDF brdf;
+        brdf.kra = atof(argv[i+10]);
+        brdf.kga = atof(argv[i+11]);
+        brdf.kba = atof(argv[i+12]);
+        
+        brdf.krd = atof(argv[i+13]);
+        brdf.kgd = atof(argv[i+14]);
+        brdf.kbd = atof(argv[i+15]);
+        
+        brdf.krs = atof(argv[i+16]);
+        brdf.kgs = atof(argv[i+17]);
+        brdf.kbs = atof(argv[i+18]);
+        
+        brdf.krr = atof(argv[i+19]);
+        brdf.kgr = atof(argv[i+20]);
+        brdf.kbr = atof(argv[i+21]);
+        
+        brdf.sp = atof(argv[i+22]);
+        addSphere(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]),atof(argv[i+7]),atof(argv[i+8]),atof(argv[i+9]),&brdf);
+    }
+    else if(strcmp(item,"-triangle")==0)// -triangle x y z rotatex rotatey rotatez width  kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr   sp
+    {
+        BRDF brdf;
+        brdf.kra = atof(argv[i+8]);
+        brdf.kga = atof(argv[i+9]);
+        brdf.kba = atof(argv[i+10]);
+        
+        brdf.krd = atof(argv[i+11]);
+        brdf.kgd = atof(argv[i+12]);
+        brdf.kbd = atof(argv[i+13]);
+        
+        brdf.krs = atof(argv[i+14]);
+        brdf.kgs = atof(argv[i+15]);
+        brdf.kbs = atof(argv[i+16]);
+        
+        brdf.krr = atof(argv[i+17]);
+        brdf.kgr = atof(argv[i+18]);
+        brdf.kbr = atof(argv[i+19]);
+        
+        brdf.sp = atof(argv[i+20]);
+        addTriangle(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]),atof(argv[i+7]),&brdf);
+    }
+    else if(strcmp(item,"-camera")==0)// -camera x y z rotatex rotatey rotatez
+    {
+        Eigen::Matrix4f translate,rotatex,rotatey,rotatez;
+        translate <<1,0,0,atof(argv[i+1]),
+        0,1,0,atof(argv[i+2]),
+        0,0,1,atof(argv[i+3]),
+        0,0,0,1;
+        rotatex <<  1,0,0,0,
+        0,cos(atof(argv[i+4])),-sin(atof(argv[i+4])),0,
+        0,sin(atof(argv[i+4])),cos(atof(argv[i+4])),0,
+        0,0,0,1;
+        rotatey <<  cos(atof(argv[i+5])),0,sin(atof(argv[i+5])),0,
+        0,1,0,0,
+        -sin(atof(argv[i+5])),0,cos(atof(argv[i+5])),0,
+        0,0,0,1;
+        rotatez <<  cos(atof(argv[i+6])),-sin(atof(argv[i+6])),0,0,
+        sin(atof(argv[i+6])),cos(atof(argv[i+6])),0,0,
+        0,0,1,0,
+        0,0,0,1;
+        camera2World = translate*rotatez*rotatey*rotatex;
+    }
+    else if(strcmp(item,"-batch")==0)
+    {
+        ifstream file;
+        file.open(argv[i+1]);
+        int count = 0;
+        char output[20];
+        char *first;
+        char *args[100];
 
-    FreeImage_Initialise();
-    bitmap = FreeImage_Allocate(screenWidth*resolution,screenHeight*resolution,8*3);
+        if(file.is_open()){
+            args[count] = (char*)malloc(20);
+            file >> args[count];
+            while(!file.eof()){
+                //args[count] = output;
+             //   cout << output << endl;
+                if(strcmp(args[count],"\\n")==0)
+                {
+                  //  cout << args[0] << endl;
+                    parseOption(args[0],0,args);
+                    count = 0;
+                    args[count] = (char*)malloc(20);
+                    file >> args[count];
+                }
+                else{
+                    count+=1;
+                    args[count] = (char*)malloc(20);
+                    file >> args[count];
+                }
+            }
+        }
+        file.close();
+    }
+            /*else if(strcmp(item,"-obj")==0){
+             ifstream file;
+             vector<Eigen::Vector4f> points;
+             file.open(argv[i+1]);
+             char output[100];
+             float x,y,z;
+             if(file.is_open()){
+             while(!file.eof()){
+             file >> output;
+             
+             if(strcmp(output,"v")==0)
+             {
+             x = y = z = 0;
+             file >> output;
+             x = atof(output);
+             file >> output;
+             y = atof(output);
+             file >> output;
+             z = atof(output);
+             
+             Eigen::Vector4f point;
+             point << x,y,z,1;
+             points.push_back(point);
+             
+             }
+             else if(strcmp(output,"f")==0)
+             {
+             
+             x = y = z = 0;
+             file >> output;
+             x = atof(output)-1;
+             file >> output;
+             y = atof(output)-1;
+             file >> output;
+             z = atof(output)-1;
+             
+             Eigen::Vector4f p1,p2,p3;
+             p1 = points[(int)x];
+             p2 = points[(int)y];
+             p3 = points[(int)z];
+             //cout << p1 << p2 << p3 << endl;
+             addTriangle(p1,p2,p3);                        
+             }        
+             }
+             }
+             file.close();
+             }*/
+
+}
+int main(int argc, char *argv[]){    
+    if(argc==1 || strcmp(argv[1],"--help")==0 || strcmp(argv[1],"-h")==0)
+    {
+        printf("Usage: ");
+        printf("\n\t ./Scene [option]");
+        printf("\n\t Where options include:");
+        printf("\n\t\t -sphere \t x y z rx ry rz \t rotatex rotatey rotatez \t kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr   sp");
+        printf("\n\t\t -triangle \t x y z width \t\t rotatex rotatey rotatez \t kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr   sp");
+        printf("\n\t\t -camera \t x y z \t\t\t rotatex rotatey rotatez");
+        printf("\n\t\t -pl \t\t x y z \t\t\t r g b");
+        printf("\n\t\t -dl \t\t x y z \t\t\t r g b");
+        printf("\n\t\t -resolution imageSize (500 = 500px*500px image)");
+        printf("\n\t\t -batch batchfile (file formatted with each option on a different line, and each line ending in \"\\n\"");
+        printf("\n\t\t -o outputPath\n");
+        return 0;
+    }
+    
     
     objects = new vector<Object*>;
     lights = new vector<Object*>;
 
-    initScene();
+    //initScene();
     
     //set up camera to world transformation
-    Eigen::Matrix4f camera2World;
     camera2World << 1,0,0,0,
                     0,1,0,0,
                     0,0,1,0,
                     0,0,0,1;
     
-   /* Eigen::Matrix4f translate;
-    Eigen::Matrix4f scale;
-    Eigen::Matrix4f rotatex,rotatez;
-    translate << 1,0,0,2.8f,
-            0,1,0,-1.0f,
-            0,0,1,-2.0f,
-            0,0,0,1;
-    float theta = -3.14159f/2.5f;
-    rotatex << 1,0,0,0,
-    0,cos(theta),-sin(theta),0,
-    0,sin(theta),cos(theta),0,
-    0,0,0,1; 
-    theta = -3.14159f/2.5f;
-    rotatez << cos(theta),-sin(theta),0,0,
-    sin(theta),cos(theta),0,0,
-    0,0,1,0,
-    0,0,0,1; */
-    
     for(int i = 0; i<argc; i++){
         char *item = argv[i];
-        if(strcmp(item,"-pl")==0)// -pl x y z r g b
-        {
-            addPointLight(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]));
-        }
-        else if(strcmp(item,"-sphere")==0)// -sphere x y z r  kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr
-        {
-            BRDF brdf;
-            brdf.kra = atof(argv[i+5]);
-            brdf.kga = atof(argv[i+6]);
-            brdf.kba = atof(argv[i+7]);
-            
-            brdf.krd = atof(argv[i+8]);
-            brdf.kgd = atof(argv[i+9]);
-            brdf.kbd = atof(argv[i+10]);
-            
-            brdf.krs = atof(argv[i+11]);
-            brdf.kgs = atof(argv[i+12]);
-            brdf.kbs = atof(argv[i+13]);
-            
-            brdf.krr = atof(argv[i+14]);
-            brdf.kgr = atof(argv[i+15]);
-            brdf.kbr = atof(argv[i+16]);
-            cout << "HERE" << endl;
-            addSphere(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),&brdf);
-        }
-        else if(strcmp(item,"-triangle")==0)// -triangle x y z width  kra kga kba   krd kgd kbd   krs kgs kbs   krr kgr kbr
-        {
-            BRDF brdf;
-            brdf.kra = atof(argv[i+5]);
-            brdf.kga = atof(argv[i+6]);
-            brdf.kba = atof(argv[i+7]);
-            
-            brdf.krd = atof(argv[i+8]);
-            brdf.kgd = atof(argv[i+9]);
-            brdf.kbd = atof(argv[i+10]);
-            
-            brdf.krs = atof(argv[i+11]);
-            brdf.kgs = atof(argv[i+12]);
-            brdf.kbs = atof(argv[i+13]);
-            
-            brdf.krr = atof(argv[i+14]);
-            brdf.kgr = atof(argv[i+15]);
-            brdf.kbr = atof(argv[i+16]);
-            addTriangle(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),&brdf);
-        }
-        else if(strcmp(item,"-camera")==0)// -camera x y z rotatex rotatey rotatez
-        {
-            Eigen::Matrix4f translate,rotatex,rotatey,rotatez;
-            translate <<1,0,0,atof(argv[i+1]),
-                        0,1,0,atof(argv[i+2]),
-                        0,0,1,atof(argv[i+3]),
-                        0,0,0,1;
-            rotatex <<  1,0,0,0,
-                        0,cos(atof(argv[i+4])),-sin(atof(argv[i+4])),0,
-                        0,sin(atof(argv[i+4])),cos(atof(argv[i+4])),0,
-                        0,0,0,1;
-            rotatey <<  cos(atof(argv[i+5])),0,-sin(atof(argv[i+5])),0,
-                        0,1,0,0,
-                        sin(atof(argv[i+5])),0,cos(atof(argv[i+5])),0,
-                        0,0,0,1;
-            rotatez <<  cos(atof(argv[i+6])),-sin(atof(argv[i+6])),0,0,
-                        sin(atof(argv[i+6])),cos(atof(argv[i+6])),0,0,
-                        0,0,1,0,
-                        0,0,0,1;
-            camera2World = translate*rotatez*rotatey*rotatex;
-        }
+        parseOption(item,i,argv);
     }
 
     
+    int screenWidth = 500, screenHeight = 500;
     
-    //cout << rotate << endl;
-    
+    FreeImage_Initialise();
+    bitmap = FreeImage_Allocate(screenWidth*resolution,screenHeight*resolution,8*3);
 
     
     Camera *c = new Camera(&camera2World);
-    //c->location = location;
-
         
     Ray *r = new Ray;
     RayTracer *rt = new RayTracer;
@@ -426,15 +598,15 @@ int main(int argc, char *argv[]){
     float prev = 0;
     printf("\rPercent complete: %d%%", (int)(percentComplete*100));
     fflush(stdout);
-    for(float i = 0; i<screenWidth; i+=1.0f/resolution){
-        for (float j = 0; j<screenHeight; j+=1.0f/resolution) {
-            c->getRayForWorldPosition((screenWidth/2.0f-i)/(float)screenWidth,(screenHeight/2.0f-j)/(float)screenHeight,r);
+    for(float i = 0; i<screenWidth*resolution; i+=1.0f){
+        for (float j = 0; j<screenHeight*resolution; j+=1.0f) {
+            c->getRayForWorldPosition((screenWidth/2.0f-i/resolution)/(float)screenWidth,(screenHeight/2.0f-j/resolution)/(float)screenHeight,r);
             rt->trace(r,0,color,objects, lights);
-            setPixelColor((screenWidth-i)*resolution,(screenHeight-j)*resolution,color);
+            setPixelColor((screenWidth*resolution-i),(screenHeight*resolution-j),color);
         }
         
         
-        percentComplete = (float)i/(screenWidth);
+        percentComplete = (float)i/(screenWidth*resolution);
         if(percentComplete-prev>0.01f)
         {
             prev = percentComplete;
@@ -454,7 +626,7 @@ int main(int argc, char *argv[]){
         }
     }
     
-    FreeImage_Save(FIF_PNG,bitmap,"test.png",0);
+    FreeImage_Save(FIF_PNG,bitmap,outputPath,0);
     FreeImage_DeInitialise();
 }
 

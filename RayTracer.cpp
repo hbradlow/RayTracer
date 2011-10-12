@@ -13,6 +13,9 @@
 #include "Object.cpp"
 #include <math.h>
 #include "Light.cpp"
+#include "DirectionalLight.cpp"
+
+#define SELF_SHADOW_BIAS .01f
 using namespace std;
 
 class RayTracer {
@@ -26,8 +29,14 @@ void shade(Ray *ray, float t, Color* color,Light *light, Object *o){
     
     Eigen::Vector4f location = (*(ray->location) + (*(ray->direction)*(t)));
     
+    
     Eigen::Vector4f lightDir = ((*lightPos)-(*(ray->location) + (*(ray->direction)*t)));
     lightDir = lightDir/(lightDir.norm());
+    
+    if((light)->direction)
+    {
+        lightDir = *(light->direction);
+    }
     
     Eigen::Vector4f viewDir = *(ray->direction);
     viewDir = viewDir/(viewDir.norm());
@@ -43,19 +52,20 @@ void shade(Ray *ray, float t, Color* color,Light *light, Object *o){
     float kd = o->brdf.krd;
     float ks = o->brdf.krs;
     float ka = o->brdf.kra;
-    float dot = max(normal->dot(lightDir),0.0f)*kd*light->r + pow(max(r.dot(viewDir),0.0f),100)*ks*light->r + ka;
+    float sp = o->brdf.sp;
+    float dot = max(normal->dot(lightDir),0.0f)*kd*light->r + pow(max(r.dot(viewDir),0.0f),sp)*ks*light->r + ka;
     color->r += dot;
     
     kd = o->brdf.kgd;
     ks = o->brdf.kgs;
     ka = o->brdf.kga;
-    dot = max(normal->dot(lightDir),0.0f)*kd*light->g + pow(max(r.dot(viewDir),0.0f),100)*ks*light->g + ka;
+    dot = max(normal->dot(lightDir),0.0f)*kd*light->g + pow(max(r.dot(viewDir),0.0f),sp)*ks*light->g + ka;
     color->g += dot;
     
     kd = o->brdf.kbd;
     ks = o->brdf.kbs;
     ka = o->brdf.kba;
-    dot = max(normal->dot(lightDir),0.0f)*kd*light->b + pow(max(r.dot(viewDir),0.0f),100)*ks*light->b + ka;
+    dot = max(normal->dot(lightDir),0.0f)*kd*light->b + pow(max(r.dot(viewDir),0.0f),sp)*ks*light->b + ka;
     color->b += dot;
     
     delete normal;
@@ -98,7 +108,7 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
             bounce = bounce-2*(bounce.dot(*normal)*(*normal));
             
             
-            location = location + bounce*.01f;
+            location = location + bounce*SELF_SHADOW_BIAS;
             Ray *bRay = new Ray;
             bRay->direction = &bounce;
             bRay->location = &location;
@@ -113,34 +123,41 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
         }
         
         for(int k = 0; k<lights->size(); k++){
-            Eigen::Vector4f *lightPos = new Eigen::Vector4f;
-            (*lights)[k]->getWorldLocation(lightPos);
-            int hit = 0;
-            Ray *lightRay = new Ray;//ray of light that hits the point
-            Eigen::Vector4f r1 = *(ray->direction) * tmin + *(ray->location);
-            Eigen::Vector4f r2 = (*lightPos) - r1;
-            r1 = r1 + r2*.05f;
-            lightRay->location = &r1;
-            lightRay->direction = &r2;
-            for(int j = 0; j<objects->size(); j++){
-                if((*objects)[j]->timeOfIntersection(lightRay)>0 && (*objects)[j]->timeOfIntersection(lightRay)<1.0f)//preventing shadowing TODO
-                {
-                    hit = 1;
-                    break;
+            if(((Light*)(*lights)[k])->direction == NULL){
+                Eigen::Vector4f *lightPos = new Eigen::Vector4f;
+                (*lights)[k]->getWorldLocation(lightPos);
+                int hit = 0;
+                
+                Ray *lightRay = new Ray;//ray of light that hits the point
+                Eigen::Vector4f r1 = *(ray->direction) * tmin + *(ray->location);
+                Eigen::Vector4f r2 = (*lightPos) - r1;
+                r1 = r1 + r2*SELF_SHADOW_BIAS;
+                lightRay->location = &r1;
+                lightRay->direction = &r2;
+                for(int j = 0; j<objects->size(); j++){
+                    if((*objects)[j]->timeOfIntersection(lightRay)>0 && (*objects)[j]->timeOfIntersection(lightRay)<1.0f)//preventing shadowing TODO
+                    {
+                        hit = 1;
+                        break;
+                    }
                 }
-            }
-            if(!hit){
-
-                shade(ray,tmin,color,(Light*)(*lights)[k],o);
+                if(!hit){
+                    shade(ray,tmin,color,(Light*)(*lights)[k],o);
+                }
+                else{
+                    color->r += o->brdf.kra;
+                    color->g += o->brdf.kga;
+                    color->b += o->brdf.kba;
+                }
+                delete lightRay;
+                delete lightPos;
             }
             else{
-                color->r += o->brdf.kra;
-                color->g += o->brdf.kga;
-                color->b += o->brdf.kba;
+                shade(ray,tmin,color,(Light*)(*lights)[k],o);
             }
+                
 
-            delete lightRay;
-            delete lightPos;
+           
         }
     }
     

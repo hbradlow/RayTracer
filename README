@@ -1,0 +1,9 @@
+Henry Bradlow
+Assigment 4
+Ray Tracer
+
+To compile the code, type "make".
+To run the code, type "./Scene [options]".
+To view all options, type "./Scene --help".
+
+To run a set of test cases, type "./test.sh".  This file will out put images with file name imageX.png where X is a number matching the input command in the "sh" file.

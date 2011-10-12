@@ -1,0 +1,7 @@
+1. ./Scene -pl 1 1 -1 1 1 1 -triangle -1.5 -1.5 -8 3   0 -1 0   .05 .05 .05 .2 .2 .2 .8 .8 .8 0 0 0 50 -triangle -1.5 -1.5 -8 3   0 0 0   .05 .05 .05 .2 .2 .2 .8 .8 .8 0 0 0 50 //two triangles - demonstrating rotating triangles
+
+2. ./Scene -triangle -3 -3 -4 6    0 0 0    .05 .05 .05 .2 .2 .2 .8 .8 .8 .1 .1 .1 50   -triangle 3 3 -4 6    0 0 3.14159    .05 .05 .05 .2 .2 .2 .8 .8 .8 .1 .1 .1 50     -sphere 0 0 -3 1   0 0 0   .05 .05 .05 .2 .2 .2 .8 .8 .8 .1 .1 .1 50      -pl 1 1 -1 1 1 1  -pl -1 -1 -1 1 1 1       -camera 0 -10 -2 -1.31 0 0    -resolution 1800   //sphere on square floor - demonstrates "resolution" feature and shows reflection
+
+
+3. ./Scene -triangle -3 -3 -4 6    0 0 0    .05 .05 .05 .2 .2 .2 .8 .8 .8 .1 .1 .1 50   -triangle 3 3 -4 6    0 0 3.14159    .05 .05 .05 .2 .2 .2 .8 .8 .8 .1 .1 .1 50     -sphere 0 0 -3 1   0 0 0   .05 .05 .05 .2 .2 .2 .8 .8 .8 .1 .1 .1 50      -pl 1 1 -1 1 1 1  -pl -1 -1 -1 1 1 1       -camera 2 -10 -1 -1.21 0 0    -resolution 2000           -triangle 3 4 -4 6   1.571  -1.571 0    .0 .0 .0 .2 .2 .2 0 0 0 1 1 1 50     // demonstrates a triangle acting like a mirror
+

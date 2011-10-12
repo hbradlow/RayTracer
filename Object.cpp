@@ -21,6 +21,7 @@ struct BRDF {
     float krd,kgd,kbd;
     float krs,kgs,kbs;
     float krr,kgr,kbr;
+    float sp;
 };
 
 class Object{
