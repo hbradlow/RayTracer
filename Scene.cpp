@@ -79,12 +79,15 @@
 #include "Light.cpp"
 #include "Triangle.cpp"
 
+#include <omp.h>
+
 using namespace std;
 
 FIBITMAP * bitmap;
 vector<Object*> *objects;
 vector<Object*> *lights;
 float resolution = 1.0f;
+int depth = 9;
 Eigen::Matrix4f camera2World;
 char *outputPath = "test.png";
 
@@ -393,6 +396,10 @@ void parseOption(char* item, int i, char *argv[]){
     {
         outputPath = argv[i+1];
     }
+    if(strcmp(item,"-depth")==0)// -depth value
+    {
+        depth = atoi(argv[i+1]);
+    }
     if(strcmp(item,"-pl")==0)// -pl x y z r g b
     {
         addPointLight(atof(argv[i+1]),atof(argv[i+2]),atof(argv[i+3]),atof(argv[i+4]),atof(argv[i+5]),atof(argv[i+6]));
@@ -559,7 +566,8 @@ int main(int argc, char *argv[]){
         printf("\n\t\t -pl \t\t x y z \t\t\t r g b");
         printf("\n\t\t -dl \t\t x y z \t\t\t r g b");
         printf("\n\t\t -resolution imageSize (500 = 500px*500px image)");
-        printf("\n\t\t -batch batchfile (file formatted with each option on a different line, and each line ending in \"\\n\"");
+        printf("\n\t\t -batch batchfile (file formatted with each option on a different line, and each line ending in \"\\n\")");
+        printf("\n\t\t -depth value");
         printf("\n\t\t -o outputPath\n");
         return 0;
     }
@@ -592,12 +600,15 @@ int main(int argc, char *argv[]){
         
     Ray *r = new Ray;
     RayTracer *rt = new RayTracer;
+    rt->depthLimit = depth;
     Color *color = new Color(0,0,0);
 
     float percentComplete = 0;
     float prev = 0;
     printf("\rPercent complete: %d%%", (int)(percentComplete*100));
     fflush(stdout);
+#pragma omp parallel for      \  
+      default(shared) private(i)
     for(float i = 0; i<screenWidth*resolution; i+=1.0f){
         for (float j = 0; j<screenHeight*resolution; j+=1.0f) {
             c->getRayForWorldPosition((screenWidth/2.0f-i/resolution)/(float)screenWidth,(screenHeight/2.0f-j/resolution)/(float)screenHeight,r);

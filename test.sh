@@ -15,3 +15,6 @@ echo $'\n' ./Scene -batch image5.batch
 
 echo $'\n' ./Scene -batch image6.batch
 ./Scene -batch image6.batch
+
+echo $'\n' ./Scene -batch image7.batch
+./Scene -batch image7.batch

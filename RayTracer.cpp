@@ -20,6 +20,7 @@ using namespace std;
 
 class RayTracer {
 public:
+    int depthLimit;
     void trace(Ray *ray, int depth, Color* color, vector<Object*>* objects, vector<Object*>* lights);
 };
 
@@ -77,7 +78,7 @@ void RayTracer::trace(Ray *ray, int depth, Color* color, vector<Object*>* object
         color->g = 0;
         color->b = 0;
     }
-    if(depth>9){
+    if((depthLimit && depth>depthLimit) || (!depthLimit && depth>9)){
         return;
     }
     Object* o;

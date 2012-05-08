@@ -8,9 +8,12 @@
                 color:white;
             }
             ul{
-                width:200px;
+                width:300px;
                 margin:0px auto;
-                
+                padding:0px;
+                position:relative;
+                float:left;
+                margin-bottom:50px;
             }
             li{
                 text-align:center;
@@ -24,95 +27,111 @@
                 cursor:pointer;
             }
             .testImage{
+                position:relative;
                 clear:none;
                 float:left;
                 position:relative;
-                width:800px;
-                height:800px;
+                width:700px;
+                height:700px;
                 margin:0px;
-                margin-right:50px;
-                margin-left:50px;
                 padding:0px;
             }
             .testText{
                 clear:none;
                 float:left;
                 position:relative;
-                width:400px;
-                height:150px;
+                width:292px;
+                height:300px;
                 margin:0px;
                 padding:0px;
+                border:1px solid white;
+                padding:3px;
             }
             </style>
         
         <script type="text/javascript">
             $(function(){
-              var shift = 900;
+              var shift = 700;
+              var labelShift = 300;
               $("#link1").mouseover(function(){
                                     $(".sliddable").stop().animate({"right":shift*0 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*0 + "px"});
                                     });
               $("#link2").mouseover(function(){
                                     $(".sliddable").stop().animate({"right":shift*1 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*1 + "px"});
                                     });
               $("#link3").mouseover(function(){
                                     $(".sliddable").stop().animate({"right":shift*2 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*2 + "px"});
                                     });
               $("#link4").mouseover(function(){
                                     $(".sliddable").stop().animate({"right":shift*3 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*3 + "px"});
                                     });
               $("#link5").mouseover(function(){
                                     $(".sliddable").stop().animate({"right":shift*4 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*4 + "px"});
                                     });
               $("#link6").mouseover(function(){
                                     $(".sliddable").stop().animate({"right":shift*5 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*5 + "px"});
+                                    });
+              $("#link7").mouseover(function(){
+                                    $(".sliddable").stop().animate({"right":shift*6 + "px"});
+                                    $(".testText").stop().animate({"right":labelShift*6 + "px"});
                                     });
               });
             </script>
     </header>
     
     <body>
-        <div style="width:900px;margin:0px auto;">
-            <h1 style="width:380px;margin:0px auto;margin-bottom:40px;">Assignment 4: Ray Tracing</h1>
+        <div style="width:1100px;margin:0px auto;">
+            <h1 style="width:420px;margin:0px auto;margin-bottom:40px;">Assignment 4: Ray Tracing</h1>
             
-            <div id="imageFrame" style="width:900px;height850px;margin:0px auto;margin-right:60px;overflow:hidden;padding:0px;float:left;position:relative;clear:none;">
-                <ul>
-                    <p style="margin:0px auto;width:130px;text-decoration:underline;">Hover for more...</p>
-                    <li id="link1">Two Point Lights</li>                    
-                    <li id="link2">Directional Diffuse Lighting</li>
-                    <li id="link3">Directional Specular Lighting</li>
-                    <li id="link4">Point Specular Lighting</li>
-                    <li id="link5">Diffuse and Specular Lighting</li>
-                    <li id="link6">Three Different Lights</li>
-                </ul>
+            <div id="imageFrame" style="width:1005px;height:1000px;margin:0px auto;">
+                <div style="width:300px; height:800px;position:relative;float:left;padding-right:5px;">
+                    <ul>
+                        <p style="margin:0px auto;width:130px;text-decoration:underline;">Hover for more...</p>
+                        <li id="link1">Two Triangles</li>                    
+                        <li id="link2">Sphere on Plane</li>
+                        <li id="link3">Sphere on Plane with Mirror</li>
+                        <li id="link4">Many Metal Spheres</li>
+                        <li id="link5">Colored and Scaled Spheres</li>
+                        <li id="link6">Colored, Scaled, and Rotated Spheres</li>
+                        <li id="link7">Lots of Reflection on a Sphere</li>
+                    </ul>
                 
-                <div style="position:relative;width:6000px;height:300px;">
-                    <img class="testImage sliddable" src="Images/image1.png" style=""></img>                   
-                    <img class="testImage sliddable" src="Images/image2.png"></img>
-                    <img class="testImage sliddable" src="Images/image3.png"></img>
-                    <img class="testImage sliddable" src="Images/image4.png"></img>                   
-                    <img class="testImage sliddable" src="Images/image5.png"></img>                    
-                    <img class="testImage sliddable" src="Images/image6.png"></img>
+                    <div style="position:relative;width:300px;height:400px;overflow:hidden;">
+                        <div style="position:relative;width:6000px;height:150px;">
+                            <p class="testText sliddable">This example shows two triangles.  The first is being lit up by a light source and the second is rotated so that the light source hits the back of the triangle.<br /><br />
+                                                            The input for this image is "./Scene -batch image1.batch".</p>
+                            <p class="testText sliddable">This example shows a sphere on a square plane made up of two triangles.  The plan is reflected on the surface of the sphere, and all objects are lit by two point light sources.<br /><br />This input for this image is "./Scene -batch image2.batch".</p>
+                            <p class="testText sliddable">This example shows a sphere on a plane with a triangular mirror in the background that refelcts the scene. <br /><br />This input for this image is "./Scene -batch image3.batch".</p>
+                            <p class="testText sliddable">This scene shows 9 metal spheres resing on a slightly reflective surface, underneath an unreflective cealing.  The spheres are purely reflective and dont scatter light in any other way (ka=ks=kd=0).<br /><br />This input for this image is "./Scene -batch image4.batch".</p>
+                            <p class="testText sliddable">This scene shows 9 colored metal spheres that have been stretched into ellipsoides.  Again, they do not scatter light (ka=kd=ks=0); their color comes from the type of light that they reflect.<br /><br />This input for this image is "./Scene -batch image5.batch".</p>
+                            <p class="testText sliddable">This scene is the same as the previous (Colored and Scaled Spheres) except the ellipsoides have been rotated in a variety of directions.  The camera angle is also changed.<br /><br />This input for this image is "./Scene -batch image6.batch".</p>
+                            <p class="testText sliddable">This is a close up of a colored metal sphere among a total of 9 spheres in a grid.  Many layers (nine) of reflection have been rendered.<br /><br />This input for this image is "./Scene -batch image7.batch".</p>
+                        </div>
+                    </div>
+                </div>
+                    
+                <div style="position:relative;width:700px;height:7s00px;overflow:hidden;">
+                    <div style="position:relative;width:6000px;height:300px;">
+                        <img class="testImage sliddable" src="Images/image1.png" style=""></img>                   
+                        <img class="testImage sliddable" src="Images/image2.png"></img>
+                        <img class="testImage sliddable" src="Images/image3.png"></img>
+                        <img class="testImage sliddable" src="Images/image4.png"></img>                   
+                        <img class="testImage sliddable" src="Images/image5.png"></img>                    
+                        <img class="testImage sliddable" src="Images/image6.png"></img>
+                        <img class="testImage sliddable" src="Images/image7.png"></img>
+                    </div>
                 </div>
                 
-                <div style="position:relative;width:6000px;height:150px;">
-                    <p class="testText sliddable">This is the test case that Professor O'Brien provided.  The command line options used to generate this image are: <br></br>-ka 0.1 0.03 0.03 -kd 1.0 1.0 1.0 -ks 1.0 1.0 0.0 -pl 4.0 -3.0 -1.0 0.6 0.0 0.6 -pl -4.0 3.0 1.0 0.6 0.6 0.0 -sp 20.0 -image test.png</p>
-                    <p class="testText sliddable">This is an example of simple diffuse lighing from a directional source.  The command line options used to generate this image are: <br></br>-sp 50 -ka .1 .1 .1 -kd 0 0 1 -dl -0.4 -0.75 -.6 1 1 1 -image test.png</p>
-                    <p class="testText sliddable">This is an example of simple specular lighting from a directional source.  The command line options used to generate this image are: <br></br>-sp 45 -ka .1 .1 .1 -ks .8 .8 .8 -dl -0.1 -0.75 -.6 1 1 1 -image test.png</p>
-                    <p class="testText sliddable">This is an example of simple specular lighting from a point source.  The command line options used to generate this image are: <br></br>-sp 45 -ka .1 .1 .1 -ks 1 1 1 -pl 0.4 0.4 2 1 1 1 -image test.png</p>
-                    <p class="testText sliddable">This is an example of specular and diffuse lighting from a directional source combined to make a realistic looking sphere.  The command line options used to generate this image are: <br></br>-sp 45 -ka .1 .1 .1 -kd 0 .6 .3 -ks 1 1 1 -dl -0.4 -0.75 -.6 1 1 1 -image test.png</p>
-                    <p class="testText sliddable">This is an example of three different point lights with different colors shining on the same sphere.  The command line options used to generate this image are: <br></br>-sp 45 -ka .1 .1 .1 -kd .6 .6 .6 -ks .6 .6 .6 -pl .9 .9 1.5 1 0 0 -pl -.9 .9 1.5 0 1 0 -pl 0 -.9 1.5 0 0 1 -image test.png</p>
-                    <p class="testText sliddable">This is an example of the toon shading algorithm I implemented.  The command line options used to generate this image are: <br></br>-sp 45 -ka .01 .01 .01 -kd 0 .7 .5 -ks .6 .6 .6 -dl -0.4 -0.75 -.6 .9 .9 .9 -toon -image test.png</p>
-                    <p class="testText sliddable">This is an example of the textured shading algorith I implemented.  The command line options used to generate this image are: <br></br>-ka 0.1 0.03 0.03 -kd 1.0 1.0 1.0 -ks 1.0 1.0 0.0 -pl 4.0 -3.0 -1.0 0.6 0.0 0.6 -pl -4.0 3.0 1.0 0.6 0.6 0.0 -sp 20.0 -image test.png -textured</p>
-                </div>
+                
+                
+                
             </div>
-            
-            <div id="options" style="float:left;position:relative;clear:none;height:400px;width:300px;margin-left:60px;">
-                I implemented three extra features that are documented in the README file that I submitted.<br /><br />
-                1. Toon shading can be generated by using the command line option: "-toon".<br /><br />
-                2. Rough texturing can be generated by using the command line option: "-textured".<br /><br />
-                3. An image can be generated by using the command line option: "-image filename".<br /><br />
-            </div>
-            
         </div>
     </body>
 </html>
